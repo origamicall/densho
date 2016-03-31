@@ -1,0 +1,12 @@
+{application, densho,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { densho_app, []}},
+  {env, []}
+ ]}.
