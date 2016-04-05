@@ -33,7 +33,7 @@ get_status(Response) ->
         {#xmlElement{name=result}=Result, []} -> 
             [Text|_] = xmerl_xpath:string("status/text()", Result),
             case lists:keyfind(Text#xmlText.value, 1, ?STATUS) of
-                ?SUCCESS -> {ok, "Success"};
+                ?SUCCESS -> ok;
                 {_, Reason} -> {error, Reason}
             end;
         Error ->
