@@ -23,13 +23,22 @@ send_sms(Dst, Message) ->
     get_status(Response).
 
 
+
+
+%% Internal Funct
+
 get_status(Response) ->
     Content = maps:get(body, Response),
     case catch xmerl_scan:string(binary_to_list(Content)) of
         {#xmlElement{name=result}=Result, []} -> 
             [Text|_] = xmerl_xpath:string("status/text()", Result),
-            {ok, proplists:get_value(Text#xmlText.value, ?STATUS)};
-        Error -> {error, Error}
+            case lists:keyfind(Text#xmlText.value, 1, ?STATUS) of
+                ?SUCCESS -> {ok, "Success"};
+                {_, Reason} -> {error, Reason}
+            end;
+        Error ->
+            lager:error("Error Xmerl :~p", [Error]),
+            {error, "Error XML xmer_scan"}
     end.
 
 create_body(User, Pass, Phone, Msg) when is_binary(Phone) ->

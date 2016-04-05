@@ -1,7 +1,9 @@
 -module(densho_router).
 -behaviour(gen_server).
 
--export([start_link/0, stop/0, get_providers/0]).
+-export([start_link/0, stop/0]).
+
+-export([get_providers/0]).
 
 %% incluir el get_provider
 
