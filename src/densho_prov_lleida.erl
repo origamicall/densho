@@ -17,12 +17,21 @@ send_sms(Dst, Message) ->
     Url = proplists:get_value(url, Conf),
     Uri = proplists:get_value(uri, Conf),
     Body = create_body(User, Pass, Dst, Message),
-    {ok, Conn} = shotgun:open(Url, 80),
-    {ok, Response} = shotgun:post(Conn, "/" ++ Uri  ++ "/" , ?HEADER, list_to_binary(Body), #{}),
-    shotgun:close(Conn),
-    get_status(Response).
-
-
+    case shotgun:open(Url, 80) of
+        {ok, Conn} ->
+            Resp = shotgun:post(Conn, "/" ++ Uri  ++ "/" , ?HEADER, list_to_binary(Body), #{}),
+            shotgun:close(Conn),
+            case Resp of
+                {ok, Response}  ->
+                    get_status(Response);
+                {error, Reason} ->
+                    lager:error("Error to send sms Prov: ~p Reason:~n~p", [?PROV, Reason]),
+                    {error, "Error to send sms Prov " ++ atom_to_list(?PROV)}
+            end;
+        {error, ReasonGun} ->
+            lager:error("Error to send sms Prov: ~p Reason: ~p", [?PROV, ReasonGun]),
+            {error, ReasonGun}
+    end.
 
 
 %% Internal Funct
