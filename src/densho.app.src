@@ -1,11 +1,12 @@
 {application, densho,
  [
-  {description, ""},
-  {vsn, "1"},
+  {description, "SMS Router for different SMS providers"},
+  {vsn, git},
   {registered, []},
   {applications, [
                   kernel,
-                  stdlib
+                  stdlib,
+                  shotgun
                  ]},
   {mod, { densho_app, []}},
   {env, []}
