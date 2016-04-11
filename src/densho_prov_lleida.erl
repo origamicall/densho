@@ -1,7 +1,7 @@
 -module(densho_prov_lleida).
 -behaviour(densho_prov).
 
--export([send_sms/2]).
+-export([send_sms/2, send_sms/3]).
 
 -include_lib("xmerl/include/xmerl.hrl").
 -include("lleida.hrl").
@@ -9,14 +9,19 @@
 -define(HEADER, #{<<"content-type">> => <<"application/x-www-form-urlencoded">>}).
 -define(PROV, lleida).
 
+
+
 send_sms(Dst, Message) ->
+    send_sms(utf8, Dst, Message).
+
+send_sms(TypeMessage, Dst, Message) ->
     {ok, ConfProviders} = application:get_env(densho, sms_providers_config),
     Conf = proplists:get_value(?PROV, ConfProviders),
     User = proplists:get_value(username, Conf),
     Pass = proplists:get_value(password, Conf),
     Url = proplists:get_value(url, Conf),
     Uri = proplists:get_value(uri, Conf),
-    Body = create_body(User, Pass, Dst, Message),
+    Body = create_body(TypeMessage, User, Pass, Dst, Message),
     case shotgun:open(Url, 80) of
         {ok, Conn} ->
             Resp = shotgun:post(Conn, "/" ++ Uri  ++ "/" , ?HEADER, list_to_binary(Body), #{}),
@@ -50,13 +55,29 @@ get_status(Response) ->
             {error, "Error XML xmer_scan"}
     end.
 
-create_body(User, Pass, Phone, Msg) when is_binary(Phone) ->
-    create_body(User, Pass, binary_to_list(Phone), Msg);
 
-create_body(User, Pass, Phone, Msg) when is_binary(Msg) ->
-    create_body(User, Pass, Phone, binary_to_list(Msg));
 
-create_body(User, Pass, Phone, Msg) ->
-    "xml=" ++ edoc_lib:escape_uri("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><!DOCTYPE sms SYSTEM \"sms.dtd\">"
-    "<sms><user>" ++ User ++ "</user><password>" ++ Pass ++ "</password><dst><num>+34" ++ Phone ++
-    "</num></dst><txt>" ++ Msg ++ "</txt></sms>").
+create_body(TypeMessage, User, Pass, Phone, Msg) when is_binary(Phone) ->
+    create_body(TypeMessage, User, Pass, binary_to_list(Phone), Msg);
+
+create_body(TypeMessage, User, Pass, Phone, Msg) when is_binary(Msg) ->
+    create_body(TypeMessage, User, Pass, Phone, binary_to_list(Msg));
+
+
+create_body(utf16, User, Pass, Phone, Msg) ->
+    Msg64 =base64:encode(unicode:characters_to_binary(Msg, utf8, utf16)),
+    "xml=" ++ edoc_lib:escape_uri("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
+        "<!DOCTYPE sms SYSTEM \"sms.dtd\">"
+    "<sms><user>" ++ User ++ "</user><password>" ++ Pass ++ "</password>"
+        "<dst><num>" ++ Phone ++ "</num></dst>"
+        "<txt encoding=\"base64\" charset=\"utf-16\">" ++ binary_to_list(Msg64) ++ "</txt>"
+        "<data_coding>unicode</data_coding>"
+    "</sms>");
+
+ create_body(utf8, User, Pass, Phone, Msg) ->
+    "xml=" ++ edoc_lib:escape_uri("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
+        "<!DOCTYPE sms SYSTEM \"sms.dtd\">"
+    "<sms><user>" ++ User ++ "</user><password>" ++ Pass ++ "</password>"
+        "<dst><num>" ++ Phone ++ "</num></dst>"
+        "<txt>" ++ Msg ++ "</txt>"
+    "</sms>").
