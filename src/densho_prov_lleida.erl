@@ -36,7 +36,7 @@ send_sms(TypeMessage, Dst, Message, Src) ->
                 {ok, Response}  ->
                     get_status(Response);
                 {error, Reason} ->
-                    lager:error("Error to send sms Prov: ~p Reason:~n~p",
+                    lager:warning("Can't send sms Prov: ~p Reason:~n~p",
                                 [?PROV, Reason]),
                     {error, "Error to send sms Prov " ++ atom_to_list(?PROV)}
             end;
