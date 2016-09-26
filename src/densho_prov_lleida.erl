@@ -25,12 +25,13 @@ send_sms(TypeMessage, Dst, Message, Src) ->
     Url = proplists:get_value(url, Conf),
     Uri = proplists:get_value(uri, Conf),
     Body = create_body(TypeMessage, User, Pass, Dst, Message, Src),
+    Timeout = application:get_env(densho, sms_url_timeout, 5000),
     % TODO: implement something like poolboy to use shotgun with low latency
     %       creating several workers (not open/close every time).
-    case shotgun:open(Url, 80, 30000) of
+    case shotgun:open(Url, 80, http, #{timeout => Timeout}) of
         {ok, Conn} ->
             Resp = shotgun:post(Conn, "/" ++ Uri  ++ "/" , ?HEADER,
-                                list_to_binary(Body), #{}),
+                                list_to_binary(Body), #{timeout => Timeout}),
             shotgun:close(Conn),
             case Resp of
                 {ok, Response}  ->
