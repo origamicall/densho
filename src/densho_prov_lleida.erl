@@ -27,7 +27,7 @@ send_sms(TypeMessage, Dst, Message, Src) ->
     Body = create_body(TypeMessage, User, Pass, Dst, Message, Src),
     % TODO: implement something like poolboy to use shotgun with low latency
     %       creating several workers (not open/close every time).
-    case shotgun:open(Url, 80) of
+    case shotgun:open(Url, 80, 30000) of
         {ok, Conn} ->
             Resp = shotgun:post(Conn, "/" ++ Uri  ++ "/" , ?HEADER,
                                 list_to_binary(Body), #{}),
